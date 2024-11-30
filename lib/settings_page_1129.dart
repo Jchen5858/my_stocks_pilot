@@ -236,7 +236,7 @@ class SettingsPage extends StatelessWidget {
               }
             },
             child: Card(
-              color: Colors.deepOrangeAccent,
+              color: Colors.greenAccent,
               elevation: 4,
               child: Center(
                 child: Text(

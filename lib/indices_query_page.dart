@@ -73,6 +73,9 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
       final dbPath = await _getDatabasePath('Options_MasterDB_P.db');
       final dbExists = await File(dbPath).exists();
 
+      print("資料庫路徑：$dbPath");
+      print("資料庫是否存在：$dbExists");
+
       if (!dbExists) {
         _showDatabaseWarning('資料庫尚未轉入，將使用預設大盤指數！');
         await _fetchMarketIndices(_getDefaultIndices());
@@ -80,13 +83,19 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
       }
 
       final db = await openDatabase(dbPath);
+      print("資料庫已開啟，檢查資料表...");
+
       if (!await _checkTableExists(db, 'market_indices')) {
         _showDatabaseWarning('資料表尚未建立，將使用預設大盤指數！');
         await _fetchMarketIndices(_getDefaultIndices());
         return;
       }
 
+      print("資料表 'market_indices' 存在，開始讀取資料...");
+
       final indices = await _getMarketIndicesFromDb(db);
+      print("從資料庫讀取的資料：$indices");
+
       if (indices.isEmpty) {
         _showDatabaseWarning('資料表內容為空，將使用預設大盤指數！');
         await _fetchMarketIndices(_getDefaultIndices());
@@ -153,13 +162,18 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
     final result = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
         [tableName]);
+
+    print("檢查資料表 '$tableName' 是否存在，查詢結果：$result");
+
     return result.isNotEmpty;
   }
 
   Future<List<Map<String, String>>> _getMarketIndicesFromDb(Database db) async {
-    final List<Map<String, dynamic>> result =
-    await db.query(
+    final List<Map<String, dynamic>> result = await db.query(
         'market_indices', columns: ['symbol', 'chinese_name', 'country']);
+
+    print("從資料庫查詢 'market_indices' 資料表，結果：$result");
+
     return result.map((row) {
       return {
         'symbol': row['symbol'] as String,

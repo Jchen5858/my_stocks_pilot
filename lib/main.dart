@@ -36,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const IndicesQueryPage(), // 大盤查詢功能頁
     const StocksQueryPage(), // 股票查詢功能頁
-    const OptionsQueryPage(), // 選擇權查詢功能頁
+    const OptionsOrderPage(), // 選擇權查詢功能頁
     const StocksOrderPage(), // 股票管理功能頁
     const SettingsPage(), // 設定功能頁
   ];
@@ -61,13 +61,13 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         backgroundColor: Colors.teal,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const Text(
-              '股票小助手',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            const Expanded(
+              child: Text(
+                '股票小助手',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
-            const Spacer(),
             Text(
               'v1.0.0',
               style: const TextStyle(fontSize: 12, color: Colors.white),
@@ -104,7 +104,7 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '大盤'),
           BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: '股價'),
           BottomNavigationBarItem(icon: Icon(Icons.pie_chart), label: '選擇權'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: '股價'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: '訂單'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '設定'),
         ],
       ),
@@ -121,8 +121,7 @@ class _MainScreenState extends State<MainScreen> {
                 "1. 點擊主頁查看大盤指數。\n"
                 "2. 使用股價查詢查看特定股票資料。\n"
                 "3. 選擇權查詢提供衍生性商品的資料。\n"
-                "4. 訂單和設定可以管理您的交易和應用配置。"
-        ),
+                "4. 訂單和設定可以管理您的交易和應用配置。"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
