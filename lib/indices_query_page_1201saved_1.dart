@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:my_stocks_pilot/database/database_manager.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
 
 class IndicesQueryPage extends StatefulWidget {
@@ -68,12 +70,22 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
     });
 
     try {
-      final dbManager = DatabaseManager();
-      final db = await dbManager.database;
+      final dbPath = await _getDatabasePath('Options_MasterDB_P.db');
+      final dbExists = await File(dbPath).exists();
 
-      print("資料庫已開啟，檢查資料表 'market_indices' 是否存在...");
+      print("資料庫路徑：$dbPath");
+      print("資料庫是否存在：$dbExists");
 
-      if (!await _checkTableExists('market_indices')) {
+      if (!dbExists) {
+        _showDatabaseWarning('資料庫尚未轉入，將使用預設大盤指數！');
+        await _fetchMarketIndices(_getDefaultIndices());
+        return;
+      }
+
+      final db = await openDatabase(dbPath);
+      print("資料庫已開啟，檢查資料表...");
+
+      if (!await _checkTableExists(db, 'market_indices')) {
         _showDatabaseWarning('資料表尚未建立，將使用預設大盤指數！');
         await _fetchMarketIndices(_getDefaultIndices());
         return;
@@ -81,11 +93,8 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
 
       print("資料表 'market_indices' 存在，開始讀取資料...");
 
-      final indices = await dbManager.queryTable('market_indices');
-      print("market_indices 資料表內容：");
-      for (final row in indices) {
-        print(row); // 印出每一列的內容
-      }
+      final indices = await _getMarketIndicesFromDb(db);
+      print("從資料庫讀取的資料：$indices");
 
       if (indices.isEmpty) {
         _showDatabaseWarning('資料表內容為空，將使用預設大盤指數！');
@@ -93,14 +102,7 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
         return;
       }
 
-      // 將資料表的內容用於後續操作
-      await _fetchMarketIndices(indices.map((row) {
-        return {
-          'symbol': row['symbol'] as String,
-          'chinese_name': row['chinese_name'] as String,
-          'country': row['country'] as String,
-        };
-      }).toList());
+      await _fetchMarketIndices(indices);
     } catch (e) {
       setState(() {
         errorMessage = '初始化時發生錯誤：$e';
@@ -151,8 +153,12 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
     }
   }
 
-  Future<bool> _checkTableExists(String tableName) async {
-    final db = await DatabaseManager().database;
+  Future<String> _getDatabasePath(String dbName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    return p.join(directory.path, dbName);
+  }
+
+  Future<bool> _checkTableExists(Database db, String tableName) async {
     final result = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
         [tableName]);
@@ -162,9 +168,7 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
     return result.isNotEmpty;
   }
 
-
-  Future<List<Map<String, String>>> _getMarketIndicesFromDb() async {
-    final db = await DatabaseManager().database;
+  Future<List<Map<String, String>>> _getMarketIndicesFromDb(Database db) async {
     final List<Map<String, dynamic>> result = await db.query(
         'market_indices', columns: ['symbol', 'chinese_name', 'country']);
 
@@ -178,7 +182,6 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
       };
     }).toList();
   }
-
 
   void _showDatabaseWarning(String message) {
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:my_stocks_pilot/database/database_manager.dart';
 
 class OptionsOrderPage extends StatefulWidget {
   const OptionsOrderPage({Key? key}) : super(key: key);
@@ -9,8 +8,6 @@ class OptionsOrderPage extends StatefulWidget {
 }
 
 class _OptionsOrderPageState extends State<OptionsOrderPage> {
-  final DatabaseManager _dbManager = DatabaseManager();
-
   bool _isPanelVisible = false;
 
   final TextEditingController _bankController = TextEditingController();
@@ -24,74 +21,15 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
   final TextEditingController _dealPremiumController = TextEditingController();
   final TextEditingController _dealDateController = TextEditingController();
 
-  String? _selectedKeyId; // 選中的訂單 ID
-  Map<String, dynamic>? _selectedRowData; // 選中的資料列
-  List<Map<String, dynamic>> _orderData = []; // 訂單數據列表
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeDatabase();
-  }
-
-  Future<void> _initializeDatabase() async {
-    try {
-      // 確認資料表是否存在
-      final tables = await _dbManager.getTableNames();
-      if (!tables.contains('Options_Order_Bag')) {
-        throw Exception('資料表 Options_Order_Bag 不存在！');
-      }
-
-      // 讀取資料表內容
-      final data = await _dbManager.queryTable('Options_Order_Bag');
-      setState(() {
-        _orderData = data; // 正確更新狀態變數
-      });
-    } catch (e) {
-      _showMessage('初始化資料失敗：$e', Colors.red);
-    }
-  }
-
+  String? _selectedKeyId;
+  Map<String, dynamic>? _selectedRowData;
+  List<Map<String, dynamic>> _orderData = [];
 
   void _togglePanel() {
     setState(() {
       _isPanelVisible = !_isPanelVisible;
     });
   }
-
-  bool _validateInput() {
-    if (_bankController.text.isEmpty ||
-        _symbolController.text.isEmpty ||
-        _expirationController.text.isEmpty ||
-        _strikeController.text.isEmpty ||
-        _sharesController.text.isEmpty ||
-        _orderPremiumController.text.isEmpty ||
-        _orderDateController.text.isEmpty) {
-      _showMessage('所有欄位不可空白，請填寫正確資料！', Colors.red);
-      return false;
-    }
-
-    final datePattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-    if (!datePattern.hasMatch(_expirationController.text) ||
-        !datePattern.hasMatch(_orderDateController.text)) {
-      _showMessage('日期格式錯誤，應為 yyyy-mm-dd！', Colors.red);
-      return false;
-    }
-
-    return true;
-  }
-
-  Future<void> _reloadData() async {
-    try {
-      final data = await _dbManager.queryTable('Options_Order_Bag');
-      setState(() {
-        _orderData = data;
-      });
-    } catch (e) {
-      _showMessage('更新資料失敗：$e', Colors.red);
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -282,6 +220,7 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: 12,
+        // 縮減欄位間距
         dataRowHeight: 30,
         headingRowHeight: 40,
         columns: const [
@@ -298,7 +237,7 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
         ],
         rows: _orderData.map((data) {
           return DataRow(
-            selected: _selectedKeyId == data['key_id'],
+            selected: _selectedKeyId == data['key_id'], // 設定選中狀態
             onSelectChanged: (selected) {
               if (selected != null && selected) {
                 setState(() {
@@ -325,7 +264,6 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
       ),
     );
   }
-
 
   Widget _buildSideButton(String label, Color color, VoidCallback onPressed) {
     return ElevatedButton(
@@ -374,11 +312,21 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
     _togglePanel(); // 收起側邊按鈕
   }
 
-  void _handleOrder() async {
-    if (!_validateInput()) return;
+  void _handleOrder() {
+    if (_bankController.text.isEmpty ||
+        _symbolController.text.isEmpty ||
+        _expirationController.text.isEmpty ||
+        _strikeController.text.isEmpty ||
+        _sharesController.text.isEmpty ||
+        _orderPremiumController.text.isEmpty ||
+        _orderDateController.text.isEmpty) {
+      _showMessage('下單資料不可空白，請填入正確資料！', Colors.red);
+      return;
+    }
 
+    final keyId = 'ORD-${DateTime.now().toIso8601String()}';
     final newOrder = {
-      'key_id': 'ORD-${DateTime.now().toIso8601String()}',
+      'key_id': keyId,
       'bank': _bankController.text,
       'symbol': _symbolController.text,
       'expiration': _expirationController.text,
@@ -391,17 +339,13 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
       'deal_date': null,
     };
 
-    try {
-      final db = await _dbManager.database;
-      await db.insert('Options_Order_Bag', newOrder);
-      await _reloadData(); // 重新加載數據
+    setState(() {
+      _orderData.add(newOrder);
       _clearInputFields();
-      _showMessage('下單成功！', Colors.green);
-    } catch (e) {
-      _showMessage('下單失敗：$e', Colors.red);
-    }
-  }
+    });
 
+    _showMessage('下單成功！', Colors.green);
+  }
 
   void _handleDeal() {
     if (_selectedRowData == null) {
@@ -508,29 +452,39 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
     _showMessage('修改成功！', Colors.green);
   }
 
-  void _handleDelete() async {
+  void _handleDelete() {
     if (_selectedRowData == null) {
       _showMessage('請選擇一筆資料進行刪除！', Colors.red);
       return;
     }
 
-    try {
-      final db = await _dbManager.database;
-      await db.delete(
-        'Options_Order_Bag',
-        where: 'key_id = ?',
-        whereArgs: [_selectedKeyId],
-      );
-
-      await _reloadData(); // 重新加載數據
-      _clearInputFields();
-      _showMessage('刪除成功！', Colors.green);
-    } catch (e) {
-      _showMessage('刪除失敗：$e', Colors.red);
-    }
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            title: const Text('確認刪除'),
+            content: const Text('您確定要刪除此筆資料嗎？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _orderData.removeWhere((order) =>
+                    order['key_id'] == _selectedKeyId);
+                    _clearInputFields();
+                  });
+                  Navigator.pop(context);
+                  _showMessage('刪除成功！', Colors.green);
+                },
+                child: const Text('確認'),
+              ),
+            ],
+          ),
+    );
   }
-
-
 
   void _clearInputFields() {
     setState(() {

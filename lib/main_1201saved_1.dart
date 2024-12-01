@@ -1,24 +1,12 @@
-//*** main.dart
 import 'package:flutter/material.dart';
-import 'package:my_stocks_pilot/database/database_manager.dart';
 import 'indices_query_page.dart';
 import 'stocks_query_page.dart';
 import 'options_order_page.dart';
 import 'stocks_order_page.dart';
 import 'settings_page.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final dbManager = DatabaseManager();
-
-  // 初始化資料庫
-  try {
-    await dbManager.database;
-    print("資料庫初始化成功_main！");
-  } catch (e) {
-    print("資料庫初始化失敗_main：\$e");
-  }
-
+void main() {
+  print("App is starting from my_stocks_pilot");
   runApp(const MyApp());
 }
 
@@ -57,14 +45,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     _pageController.dispose(); // 清理 PageController
-
-    // 關閉資料庫
-    DatabaseManager().closeDatabase().then((_) {
-      print("資料庫資源已釋放_main");
-    }).catchError((error) {
-      print("資料庫關閉失敗_main：\$error");
-    });
-
     super.dispose();
   }
 
