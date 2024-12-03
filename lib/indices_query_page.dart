@@ -112,6 +112,7 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
     }
   }
 
+
   Future<void> _fetchMarketIndices(List<Map<String, String>> indices) async {
     final symbols = indices.map((index) => index['symbol']!).join(',');
     final apiUrl =
@@ -328,20 +329,20 @@ class _IndicesQueryPageState extends State<IndicesQueryPage> {
         },
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 0), // 顯示按鈕距離底部0像素（調整為合適的間距）
-        child: FloatingActionButton.extended(
-          onPressed: () => _initializeMarketIndices(),
-          tooltip: '手動更新',
-          backgroundColor: Colors.white, // 改為白色底色
-          elevation: 4.0, // 增加陰影效果
-          icon: const Icon(Icons.refresh, color: Colors.black), // 設定圖示顏色
-          label: const Text(
-            '手動更新',
-            style: TextStyle(color: Colors.black), // 設定文字顏色
+        padding: const EdgeInsets.only(bottom: 1.0), // 調整距離底部的間距
+        child: SizedBox(
+          width: 40, // 自定義按鈕寬度
+          height: 40, // 自定義按鈕高度
+          child: FloatingActionButton(
+            onPressed: () => _initializeMarketIndices(),
+            tooltip: '手動更新',
+            backgroundColor: Colors.white,
+            elevation: 4.0,
+            child: const Icon(Icons.refresh, color: Colors.black),
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat, // 使按鈕位於螢幕中間
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
 
     );
   }

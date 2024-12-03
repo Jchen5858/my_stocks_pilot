@@ -102,8 +102,6 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     }
   }
 
-
-
   String _formatPercentage(String percentage) {
     if (percentage.endsWith('%')) {
       percentage = percentage.substring(0, percentage.length - 1);
@@ -118,7 +116,6 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     }
     return '$percentage%';
   }
-
 
   Future<List<String>> _getUserPreferredStocks(Database db) async {
     final db = await DatabaseManager().database;
@@ -137,7 +134,6 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     return {for (var row in result) row['symbol'] as String: row['name'] as String};
   }
 
-
   Future<List<Map<String, dynamic>>> _fetchStocksFromAPI(List<String> symbols) async {
     final symbolsParam = symbols.join(',');
     final apiUrl = 'http://124.155.131.36:5004/api/stocks?symbols=$symbolsParam';
@@ -151,31 +147,10 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
       throw Exception('Failed to fetch stocks: ${response.statusCode}');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          '個股即時查詢',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: _fetchStockData,
-          ),
-        ],
-      ),
       body: isLoading
           ? Center(
         child: Column(
@@ -261,18 +236,18 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '價格: $formattedPrice', // 格式化價格
+                  '$formattedPrice', // 格式化價格
                   style: const TextStyle(fontSize: 12),
                 ),
                 Text(
-                  '漲跌額: $formattedChangeAmount (${changePercentage})', // 漲跌額後加上百分比
+                  '$formattedChangeAmount (${changePercentage})', // 漲跌額後加上百分比
                   style: TextStyle(
                     fontSize: 12,
                     color: changeColor, // 顏色根據漲跌動態設定
                   ),
                 ),
                 Text(
-                  '查詢時間: $queryTime', // 查詢時間
+                  '$queryTime', // 查詢時間
                   style: const TextStyle(
                     fontSize: 8,
                     color: Colors.grey,
@@ -283,6 +258,21 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
           );
         },
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 1.0), // 調整距離底部的間距
+        child: SizedBox(
+          width: 40, // 自定義按鈕寬度
+          height: 40, // 自定義按鈕高度
+          child: FloatingActionButton(
+            onPressed: _fetchStockData,
+            tooltip: '手動更新',
+            backgroundColor: Colors.white,
+            elevation: 4.0,
+            child: const Icon(Icons.refresh, color: Colors.black),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

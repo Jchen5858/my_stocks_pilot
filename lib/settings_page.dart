@@ -16,7 +16,7 @@ class SettingsPage extends StatelessWidget {
   Future<void> _copyFromGoogleDrive(BuildContext context) async {
     const fileId = '167cTA_5AoS7kHGy8vBwwcUym6O_U9GT1';
     final url = 'https://drive.google.com/uc?export=download&id=$fileId';
-
+    https://drive.google.com/file/d/167cTA_5AoS7kHGy8vBwwcUym6O_U9GT1/view?usp=drive_link
     showDialog(
       context: context,
       barrierDismissible: false,

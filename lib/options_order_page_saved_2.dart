@@ -385,7 +385,6 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
 
     print('選中資料：$data');
 
-    // 填充基本欄位
     _bankController.text = data['bank'] ?? '';
     _symbolController.text = data['symbol'] ?? '';
     _expirationController.text = data['expiration'] ?? '';
@@ -394,38 +393,18 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
     _orderPremiumController.text = data['order_premium']?.toString() ?? '';
 
     // 下單日檢查
-    if (data['order_date'] != null && data['order_date'].isNotEmpty) {
-      _orderDateController.text = data['order_date'];
-      print('order_date 已有值，保持為：${data['order_date']}');
-    } else {
+    if (data['order_date'] == null || data['order_date'].isEmpty) {
+      print('下單日為空，填入當天日期：$todayFormatted');
       _orderDateController.text = todayFormatted;
-      print('order_date 為空，填入當天日期：$todayFormatted');
+    } else {
+      _orderDateController.text = data['order_date'];
     }
 
-    // 填充成交欄位
-    if (data['deal_shares'] != null) {
-      _dealSharesController.text = data['deal_shares'].toString();
-      print('deal_shares 已有值，顯示為：${data['deal_shares']}');
-    } else {
-      _dealSharesController.text = '';
-      print('deal_shares 為空');
-    }
-
-    if (data['deal_premium'] != null) {
-      _dealPremiumController.text = data['deal_premium'].toString();
-      print('deal_premium 已有值，顯示為：${data['deal_premium']}');
-    } else {
-      _dealPremiumController.text = '';
-      print('deal_premium 為空');
-    }
-
-    if (data['deal_date'] != null && data['deal_date'].isNotEmpty) {
-      _dealDateController.text = data['deal_date'];
-      print('deal_date 已有值，顯示為：${data['deal_date']}');
-    } else {
-      _dealDateController.text = '';
-      print('deal_date 為空');
-    }
+    // 成交欄位僅打印，不填充
+    print('成交欄位檢查：');
+    print('deal_shares：${data['deal_shares']}');
+    print('deal_premium：${data['deal_premium']}');
+    print('deal_date：${data['deal_date']}');
   }
 
   void _handleAction(String action) {
@@ -596,20 +575,20 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
       return;
     }
 
-    // 檢查 deal_date, deal_premium, deal_share 是否有值，先確認已經成交
-    final dealDate = _selectedRowData!['deal_date'];
-    final dealPremium = _selectedRowData!['deal_premium'];
-    final dealShares = _selectedRowData!['deal_shares'];
+    // 檢查 order_date, order_premium, shares 是否有值
+    final orderDate = _selectedRowData!['order_date'];
+    final orderPremium = _selectedRowData!['order_premium'];
+    final orderShares = _selectedRowData!['shares'];
 
-    if (dealDate == null || dealDate.isEmpty ||
-        dealPremium == null ||
-        dealShares == null || dealShares <= 0) {
+    if (orderDate == null || orderDate.isEmpty ||
+        orderPremium == null ||
+        orderShares == null || orderShares <= 0) {
       _showMessage('未成交訂單不得平倉!!!', Colors.red);
       print('平倉失敗：未成交訂單，無法進行平倉操作！');
       return;
     }
 
-    final currentShares = dealShares as int;
+    final currentShares = orderShares as int;
 
     print('開始平倉操作，選中資料：$_selectedRowData');
 
@@ -662,6 +641,7 @@ class _OptionsOrderPageState extends State<OptionsOrderPage> {
       _showMessage('平倉失敗：$e', Colors.red);
     }
   }
+
 
   void _handleDeal() async {
     if (_selectedRowData == null) {

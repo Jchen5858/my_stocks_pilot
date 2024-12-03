@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
+import 'package:my_stocks_pilot/database/database_manager.dart';
 
 class StocksQueryPage extends StatefulWidget {
   const StocksQueryPage({super.key});
@@ -48,9 +46,10 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     });
 
     try {
-      final dbPath = await _getDatabasePath('Options_MasterDB_P.db');
-      final db = await openDatabase(dbPath);
+      final dbManager = DatabaseManager();
+      final db = await dbManager.database;
 
+      // 獲取用戶偏好的股票
       final symbols = await _getUserPreferredStocks(db);
       if (symbols.isEmpty) {
         setState(() {
@@ -59,10 +58,13 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
         return;
       }
 
+      // 從 API 獲取數據
       final apiData = await _fetchStocksFromAPI(symbols);
 
-      final stockNames = await _getStockNames(db, symbols);
+      // 獲取股票名稱
+      final stockNames = await _getStockNames(symbols); // 修正呼叫方式
 
+      // 組合結果
       setState(() {
         stockData = apiData.map((data) {
           final symbol = data['symbol'];
@@ -100,6 +102,8 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     }
   }
 
+
+
   String _formatPercentage(String percentage) {
     if (percentage.endsWith('%')) {
       percentage = percentage.substring(0, percentage.length - 1);
@@ -115,17 +119,15 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     return '$percentage%';
   }
 
-  Future<String> _getDatabasePath(String dbName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    return p.join(directory.path, dbName);
-  }
 
   Future<List<String>> _getUserPreferredStocks(Database db) async {
+    final db = await DatabaseManager().database;
     final result = await db.query('user_pref_stocks', columns: ['symbol']);
     return result.map((row) => row['symbol'] as String).toList();
   }
 
-  Future<Map<String, String>> _getStockNames(Database db, List<String> symbols) async {
+  Future<Map<String, String>> _getStockNames(List<String> symbols) async {
+    final db = await DatabaseManager().database;
     final result = await db.query(
       'stocks',
       columns: ['symbol', 'name'],
@@ -134,6 +136,7 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
     );
     return {for (var row in result) row['symbol'] as String: row['name'] as String};
   }
+
 
   Future<List<Map<String, dynamic>>> _fetchStocksFromAPI(List<String> symbols) async {
     final symbolsParam = symbols.join(',');
@@ -152,23 +155,23 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.white,
         title: const Text(
           '個股即時查詢',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+        //   onPressed: () => Navigator.of(context).pop(),
+        // ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.black),
             onPressed: _fetchStockData,
           ),
         ],
@@ -258,18 +261,18 @@ class _StocksQueryPageState extends State<StocksQueryPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '價格: $formattedPrice', // 格式化價格
+                  '$formattedPrice', // 格式化價格
                   style: const TextStyle(fontSize: 12),
                 ),
                 Text(
-                  '漲跌額: $formattedChangeAmount (${changePercentage})', // 漲跌額後加上百分比
+                  '$formattedChangeAmount (${changePercentage})', // 漲跌額後加上百分比
                   style: TextStyle(
                     fontSize: 12,
                     color: changeColor, // 顏色根據漲跌動態設定
                   ),
                 ),
                 Text(
-                  '查詢時間: $queryTime', // 查詢時間
+                  '$queryTime', // 查詢時間
                   style: const TextStyle(
                     fontSize: 8,
                     color: Colors.grey,

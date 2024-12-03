@@ -90,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
             Text(
-              'v1.0.0',
+              'v2.0.0',
               style: const TextStyle(fontSize: 12, color: Colors.white),
             ),
           ],
@@ -123,9 +123,9 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: Colors.white,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '大盤'),
-          BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: '股價'),
+          BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: '股價'),
           BottomNavigationBarItem(icon: Icon(Icons.pie_chart), label: '選擇權'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: '訂單'),
+          BottomNavigationBarItem(icon: Icon(Icons.layers), label: '股票'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '設定'),
         ],
       ),
@@ -142,7 +142,8 @@ class _MainScreenState extends State<MainScreen> {
                 "1. 點擊主頁查看大盤指數。\n"
                 "2. 使用股價查詢查看特定股票資料。\n"
                 "3. 選擇權查詢提供衍生性商品的資料。\n"
-                "4. 訂單和設定可以管理您的交易和應用配置。"),
+                "4. 個人股票管理。\n"
+                "5. 資料庫管理、大盤、個股設定。"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

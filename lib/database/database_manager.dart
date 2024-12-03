@@ -71,4 +71,28 @@ class DatabaseManager {
       print("資料庫已關閉_db_manager!");
     }
   }
+
+  // 新增資料表插入方法
+  Future<void> insertData(String tableName, Map<String, dynamic> data) async {
+    final db = await database;
+    await db.insert(tableName, data);
+    print('已插入 $tableName 資料：$data');
+  }
+
+// 更新資料表資料
+  Future<void> updateData(
+      String tableName, Map<String, dynamic> data, String whereClause, List<Object?> whereArgs) async {
+    final db = await database;
+    await db.update(tableName, data, where: whereClause, whereArgs: whereArgs);
+    print('已更新 $tableName 資料：$data');
+  }
+
+// 執行交易操作
+  Future<void> executeTransaction(Future<void> Function(Transaction) action) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await action(txn);
+    });
+  }
+
 }
